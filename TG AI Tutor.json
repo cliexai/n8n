@@ -1,0 +1,1016 @@
+{
+  "name": "TG AI Tutor",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "23b03894-17e6-485e-ac52-3eed6c62a85c",
+      "name": "Admin Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "0688b250-45f6-49ad-b3a4-f7734ceeb2a9",
+      "credentials": {
+        "telegramApi": {
+          "id": "sJ48luIi16AvqBmu",
+          "name": "Admin AI Tutor"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const message = items[0].json.message.text;\nconst match = message.match(/approve\\s+(\\d+)\\s+(\\w+)/i);\nif (match) {\n  return [{\n    json: {\n      bkash_number: match[1],\n      transaction_id: match[2]\n    }\n  }];\n} else {\n  return [];\n}"
+      },
+      "id": "56b9348d-45e6-4ad4-ad80-ccfb47010256",
+      "name": "Parse Admin Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "transactions"
+      },
+      "id": "fd5c08b7-f3ee-4e4f-9e49-c416eb991823",
+      "name": "Insert Transaction",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "u5xhtmkuNfq3F08p",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Admin Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=Transaction {{ $json.transaction_id }} for {{ $json.bkash_number }} logged successfully.",
+        "additionalFields": {}
+      },
+      "id": "382ec707-28d4-4112-8707-9b86c10d2e89",
+      "name": "Confirm to Admin",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        672,
+        0
+      ],
+      "webhookId": "750ed7ff-2fef-407a-914a-89b9160b0230",
+      "credentials": {
+        "telegramApi": {
+          "id": "fcKnfKxKOEim9bAK",
+          "name": "AI Tutor"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "541815a4-f0c1-4162-8aa1-b09a118d6437",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        496
+      ],
+      "webhookId": "b539229f-c6bb-4cf4-9573-f7eb6343500b",
+      "credentials": {
+        "telegramApi": {
+          "id": "fcKnfKxKOEim9bAK",
+          "name": "AI Tutor"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.message.text }}",
+              "operation": "startsWith",
+              "value2": "/activate"
+            }
+          ]
+        }
+      },
+      "id": "2626c376-e99a-403f-96da-6ad84a015767",
+      "name": "Is Activate Command?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        224,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = items[0].json.message.text;\nconst parts = text.split(' ');\nif (parts.length >= 3) {\n  return [{\n    json: {\n      bkash_number: parts[1],\n      transaction_id: parts[2]\n    }\n  }];\n} else {\n  return [];\n}"
+      },
+      "id": "a7447005-1ac4-4b0f-8051-ea4a2612a847",
+      "name": "Parse Activate Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        448,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "transactions",
+        "limit": 1,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "transaction_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.transaction_id }}"
+            },
+            {
+              "keyName": "bkash_number",
+              "condition": "eq",
+              "keyValue": "={{ $json.bkash_number }}"
+            },
+            {
+              "keyName": "used",
+              "condition": "eq",
+              "keyValue": "false"
+            }
+          ]
+        }
+      },
+      "id": "13a4b472-c101-4505-942c-6ee529e42ca2",
+      "name": "Check Transaction",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        672,
+        320
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "u5xhtmkuNfq3F08p",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $input.all().length > 0 }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "ccfeca4b-83bf-4e27-a853-485b0fb4e0ee",
+      "name": "Is Valid Transaction?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        896,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "transactions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "transaction_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Parse Activate Data').item.json.transaction_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "used",
+              "fieldValue": "true"
+            },
+            {
+              "fieldId": "telegram_user_id",
+              "fieldValue": "={{ $('Telegram Trigger').item.json.message.from.id.toString() }}"
+            }
+          ]
+        }
+      },
+      "id": "3ab4977f-75d8-4161-b5d6-75ac3149b9c1",
+      "name": "Mark Transaction Used",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        224
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "u5xhtmkuNfq3F08p",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "users",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "telegram_user_id",
+              "fieldValue": "={{ $('Telegram Trigger').item.json.message.from.id.toString() }}"
+            },
+            {
+              "fieldId": "subscription_status",
+              "fieldValue": "paid"
+            }
+          ]
+        }
+      },
+      "id": "d4aed22a-b028-4a57-9830-96d950530cb2",
+      "name": "Upgrade User to Paid",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        224
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "u5xhtmkuNfq3F08p",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "Your paid subscription has been activated! You can now send photos of your problems.",
+        "additionalFields": {}
+      },
+      "id": "a7c42bc1-577a-4e3d-9607-1909e0b2c5d7",
+      "name": "Notify Activation",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1568,
+        224
+      ],
+      "webhookId": "1e51918a-e2bd-4d6e-af66-0c6b689b4887",
+      "credentials": {
+        "telegramApi": {
+          "id": "fcKnfKxKOEim9bAK",
+          "name": "AI Tutor"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "Invalid transaction ID or bKash number, or it has already been used. Please check and try again.",
+        "additionalFields": {}
+      },
+      "id": "08520135-713c-4028-be0e-a34427a075c8",
+      "name": "Notify Rejection",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        416
+      ],
+      "webhookId": "bb0df0ad-27d5-46b6-b72b-0e227af06abb",
+      "credentials": {
+        "telegramApi": {
+          "id": "fcKnfKxKOEim9bAK",
+          "name": "AI Tutor"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "users",
+        "limit": 1,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "telegram_user_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Telegram Trigger').item.json.message.from.id.toString() }}"
+            }
+          ]
+        }
+      },
+      "id": "9b0d3d74-e40e-4d6f-b43b-150402ea928d",
+      "name": "Get User Status",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        448,
+        688
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "u5xhtmkuNfq3F08p",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $input.all().filter(i => i.json.telegram_user_id).length }}",
+              "operation": "equal"
+            }
+          ]
+        }
+      },
+      "id": "81a525e5-d3ce-4589-9feb-1328e5c8e917",
+      "name": "User Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        672,
+        688
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "users",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "telegram_user_id",
+              "fieldValue": "={{ $('Telegram Trigger').item.json.message.from.id.toString() }}"
+            },
+            {
+              "fieldId": "subscription_status",
+              "fieldValue": "free"
+            }
+          ]
+        }
+      },
+      "id": "25ebb72d-b444-4ec9-872b-e82f1fdab10e",
+      "name": "Create Free User",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        896,
+        608
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "u5xhtmkuNfq3F08p",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\nconst userItem = allItems.find(i => i.json.telegram_user_id) || allItems[0];\nconst status = userItem?.json?.subscription_status || 'free';\nconst msg = $('Telegram Trigger').item.json.message;\nconst hasPhoto = !!msg.photo;\nreturn [{ json: { status: status, hasPhoto: hasPhoto, text: msg.text || msg.caption || '', photo: hasPhoto ? msg.photo[msg.photo.length - 1] : null } }];"
+      },
+      "id": "ec6a892d-3c30-4ed6-ad8c-e1ba2d875550",
+      "name": "Check Tier and Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        688
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.status }}",
+              "value2": "paid"
+            }
+          ]
+        }
+      },
+      "id": "ee8e097d-9e6d-4fb7-a0a7-5acb201a1ec4",
+      "name": "Is Paid Tier?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        688
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.hasPhoto }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "2ab8dd3d-98e3-4a28-bd00-d97a94786a39",
+      "name": "Paid Sent Photo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1568,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getFile"
+      },
+      "id": "c5c78e3d-78da-4522-904a-1cf5459f09b9",
+      "name": "Download Photo",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1792,
+        416
+      ],
+      "webhookId": "f5616392-22c9-443b-9161-d28c86004ecc",
+      "credentials": {
+        "telegramApi": {
+          "id": "fcKnfKxKOEim9bAK",
+          "name": "AI Tutor"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const binaryData = items[0].binary.data;\nreturn [{\n  json: {\n    base64: binaryData.data,\n    text: $('Check Tier and Input').item.json.text\n  }\n}];"
+      },
+      "id": "3b2dc5c1-1dc9-4974-b42e-bc7562825dad",
+      "name": "Convert to Base64",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        2016,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openRouterApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": []
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "google/gemma-4-31b-it:free"
+            },
+            {
+              "name": "messages",
+              "value": "=[{\"role\": \"system\", \"content\": \"You are a math and physics tutor bot for Bangladeshi students. Always solve problems step by step showing every single step clearly. Be concise but complete. Use plain text and no LaTeX. The user may write in Bangla, English, or Banglish which is Bengali written in English Roman script. Always detect the language the user used and respond in that exact same language and script. Never switch languages unless the user does first. This bot may occasionally make mistakes so always encourage students to verify important answers with their teacher or textbook.\"}, {\"role\": \"user\", \"content\": [{\"type\": \"text\", \"text\": \"{{ $json.text }}\"}, {\"type\": \"image_url\", \"image_url\": {\"url\": \"data:image/jpeg;base64,{{ $json.base64 }}\"}}]}]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6bc4e3dd-3e5f-4a17-97ae-139b7873cbd6",
+      "name": "Gemma 4 (Paid Photo)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2240,
+        416
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "8qkgBtlMQrmZ0Z2c",
+          "name": "Header Auth account"
+        },
+        "openRouterApi": {
+          "id": "MdlXsMUkHtmnrG4R",
+          "name": "OpenRouter account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "id": "063bb08a-e499-45ad-824b-8ea427073016",
+      "name": "Send Final Response",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        2464,
+        688
+      ],
+      "webhookId": "95885851-0fcd-40ac-86d0-ebf7dd598b6b",
+      "credentials": {
+        "telegramApi": {
+          "id": "fcKnfKxKOEim9bAK",
+          "name": "AI Tutor"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openRouterApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": []
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "google/gemma-4-31b-it:free"
+            },
+            {
+              "name": "messages",
+              "value": "=[{\"role\": \"system\", \"content\": \"You are a math and physics tutor bot for Bangladeshi students. Always solve problems step by step showing every single step clearly. Be concise but complete. Use plain text and no LaTeX. The user may write in Bangla, English, or Banglish which is Bengali written in English Roman script. Always detect the language the user used and respond in that exact same language and script. Never switch languages unless the user does first. This bot may occasionally make mistakes so always encourage students to verify important answers with their teacher or textbook.\"}, {\"role\": \"user\", \"content\": \"{{ $json.text }}\"}]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7535d0f3-885c-422b-b9d2-f81e919b2a2d",
+      "name": "gemma-paid-text",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2240,
+        608
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "8qkgBtlMQrmZ0Z2c",
+          "name": "Header Auth account"
+        },
+        "openRouterApi": {
+          "id": "qudajv78yewoxu2a",
+          "name": "OpenRouter account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.hasPhoto }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "b6c63fa0-4594-4c01-8c96-0c51ddb5224a",
+      "name": "Free Sent Photo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1792,
+        848
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "Image features are locked for free users. Please upgrade to the paid tier to send photos of your problems.",
+        "additionalFields": {}
+      },
+      "id": "f4791a4a-1b79-403e-accf-b1f9bf26220d",
+      "name": "Notify Locked Feature",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        2016,
+        752
+      ],
+      "webhookId": "c41753a0-9bad-493f-aacf-54b10c91c444",
+      "credentials": {
+        "telegramApi": {
+          "id": "fcKnfKxKOEim9bAK",
+          "name": "AI Tutor"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "nvidia/nemotron-3-super-120b-a12b"
+            },
+            {
+              "name": "messages",
+              "value": "=[{\"role\":\"system\",\"content\":\"You are a math and physics tutor for Bangladeshi students. Always solve problems step by step showing every single step clearly. Be concise but complete. Use plain text and no LaTeX. The user may write in Bangla, English, or Banglish which is Bengali written in English Roman script. Always detect the language the user used and respond in that exact same language and script. Never switch languages unless the user does first. This bot may occasionally make mistakes so always encourage students to verify important answers with their teacher or textbook.\"},{\"role\":\"user\",\"content\":\"{{ $json.text }}\"}]"
+            },
+            {
+              "name": "max_tokens",
+              "value": "1024"
+            },
+            {
+              "name": "temperature",
+              "value": "1"
+            },
+            {
+              "name": "top_p",
+              "value": "0.95"
+            },
+            {
+              "name": "stream",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c8cc9480-5ab2-460e-a5c0-0861a4c5ad54",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2016,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = items[0].json.choices[0].message.content;\nreturn [{ json: { text } }];"
+      },
+      "id": "989605fb-1759-4bf2-bf97-d4ae7bd05519",
+      "name": "Strip Gemini Respons",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        944
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Admin Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Admin Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Admin Message": {
+      "main": [
+        [
+          {
+            "node": "Insert Transaction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Transaction": {
+      "main": [
+        [
+          {
+            "node": "Confirm to Admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Is Activate Command?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Activate Command?": {
+      "main": [
+        [
+          {
+            "node": "Parse Activate Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get User Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Activate Data": {
+      "main": [
+        [
+          {
+            "node": "Check Transaction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Transaction": {
+      "main": [
+        [
+          {
+            "node": "Is Valid Transaction?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Valid Transaction?": {
+      "main": [
+        [
+          {
+            "node": "Mark Transaction Used",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Rejection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Transaction Used": {
+      "main": [
+        [
+          {
+            "node": "Upgrade User to Paid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upgrade User to Paid": {
+      "main": [
+        [
+          {
+            "node": "Notify Activation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get User Status": {
+      "main": [
+        [
+          {
+            "node": "User Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "User Exists?": {
+      "main": [
+        [
+          {
+            "node": "Create Free User",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Tier and Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Free User": {
+      "main": [
+        [
+          {
+            "node": "Check Tier and Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Tier and Input": {
+      "main": [
+        [
+          {
+            "node": "Is Paid Tier?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Paid Tier?": {
+      "main": [
+        [
+          {
+            "node": "Paid Sent Photo?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Free Sent Photo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Paid Sent Photo?": {
+      "main": [
+        [
+          {
+            "node": "Download Photo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "gemma-paid-text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Photo": {
+      "main": [
+        [
+          {
+            "node": "Convert to Base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to Base64": {
+      "main": [
+        [
+          {
+            "node": "Gemma 4 (Paid Photo)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemma 4 (Paid Photo)": {
+      "main": [
+        [
+          {
+            "node": "Send Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gemma-paid-text": {
+      "main": [
+        [
+          {
+            "node": "Send Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Free Sent Photo?": {
+      "main": [
+        [
+          {
+            "node": "Notify Locked Feature",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Strip Gemini Respons",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Strip Gemini Respons": {
+      "main": [
+        [
+          {
+            "node": "Send Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "1190a769-d1e8-403a-88c9-1aa9435cfbe3",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "ec8128255dfda4906043bf2b142bdc2d77c7a40785c2091d1c8391d88c919f56"
+  },
+  "id": "cEwHfM4AAox5FlTu",
+  "tags": []
+}
